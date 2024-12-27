@@ -6,87 +6,139 @@ import (
 )
 
 func TestNewParkingLot(t *testing.T) {
-	pl := NewParkingLot(6)
-	if pl.capacity != 6 {
-		t.Errorf("Expected capacity 6, got %d", pl.capacity)
-	}
-	if len(pl.slots) != 0 {
-		t.Errorf("Expected empty slots, got %d slots", len(pl.slots))
-	}
+	t.Run("Successfully create new parking lot", func(t *testing.T) {
+		pl := NewParkingLot(6)
+		if pl.capacity != 6 {
+			t.Errorf("Expected capacity 6, got %d", pl.capacity)
+		}
+		if len(pl.slots) != 0 {
+			t.Errorf("Expected empty slots, got %d slots", len(pl.slots))
+		}
+	})
 }
 
 func TestPark(t *testing.T) {
-	pl := NewParkingLot(2)
+	t.Run("Park car in empty lot", func(t *testing.T) {
+		pl := NewParkingLot(2)
+		result := pl.Park("KA-01-HH-1234")
+		expected := "✅ Successfully allocated slot number: 1 for car: KA-01-HH-1234"
+		if result != expected {
+			t.Errorf("Expected '%s', got '%s'", expected, result)
+		}
+	})
 
-	// Test successful parking
-	result := pl.Park("KA-01-HH-1234")
-	if result != "Allocated slot number: 1" {
-		t.Errorf("Expected 'Allocated slot number: 1', got '%s'", result)
-	}
+	t.Run("Park car in partially filled lot", func(t *testing.T) {
+		pl := NewParkingLot(2)
+		pl.Park("KA-01-HH-1234")
+		result := pl.Park("KA-01-HH-9999")
+		expected := "✅ Successfully allocated slot number: 2 for car: KA-01-HH-9999"
+		if result != expected {
+			t.Errorf("Expected '%s', got '%s'", expected, result)
+		}
+	})
 
-	// Test second car
-	result = pl.Park("KA-01-HH-9999")
-	if result != "Allocated slot number: 2" {
-		t.Errorf("Expected 'Allocated slot number: 2', got '%s'", result)
-	}
-
-	// Test parking when full
-	result = pl.Park("KA-01-BB-0001")
-	if result != "Sorry, parking lot is full" {
-		t.Errorf("Expected 'Sorry, parking lot is full', got '%s'", result)
-	}
+	t.Run("Park car in full lot", func(t *testing.T) {
+		pl := NewParkingLot(1)
+		pl.Park("KA-01-HH-1234")
+		result := pl.Park("KA-01-BB-0001")
+		expected := "🚫 Sorry, parking lot is full"
+		if result != expected {
+			t.Errorf("Expected '%s', got '%s'", expected, result)
+		}
+	})
 }
 
 func TestLeave(t *testing.T) {
-	pl := NewParkingLot(2)
-	pl.Park("KA-01-HH-1234")
+	t.Run("Car leaves after parking", func(t *testing.T) {
+		pl := NewParkingLot(2)
+		pl.Park("KA-01-HH-1234")
+		result := pl.Leave("KA-01-HH-1234", 4)
+		expected := "🚗 Car with registration number KA-01-HH-1234 left from slot 1\n💰 Parking charge: $30 for 4 hours"
+		if result != expected {
+			t.Errorf("Expected '%s', got '%s'", expected, result)
+		}
+	})
 
-	// Test successful leave
-	result := pl.Leave("KA-01-HH-1234", 4)
-	expected := "Registration number KA-01-HH-1234 with Slot Number 1 is free with Charge $30"
-	if result != expected {
-		t.Errorf("Expected '%s', got '%s'", expected, result)
-	}
-
-	// Test leave with non-existent car
-	result = pl.Leave("KA-01-HH-9999", 2)
-	if !strings.Contains(result, "not found") {
-		t.Errorf("Expected 'not found' message, got '%s'", result)
-	}
+	t.Run("Try to remove non-existent car", func(t *testing.T) {
+		pl := NewParkingLot(2)
+		result := pl.Leave("KA-01-HH-9999", 2)
+		expected := "❌ Registration number KA-01-HH-9999 not found in the parking lot"
+		if result != expected {
+			t.Errorf("Expected '%s', got '%s'", expected, result)
+		}
+	})
 }
 
 func TestCalculateCharge(t *testing.T) {
 	tests := []struct {
+		name     string
 		hours    int
 		expected int
 	}{
-		{1, 10}, // Within first 2 hours
-		{2, 10}, // Exactly 2 hours
-		{3, 20}, // One additional hour
-		{5, 40}, // Three additional hours
+		{"Within first 2 hours", 1, 10},
+		{"Exactly 2 hours", 2, 10},
+		{"One additional hour", 3, 20},
+		{"Three additional hours", 5, 40},
+		{"Full day parking", 24, 230},
 	}
 
 	for _, test := range tests {
-		result := calculateCharge(test.hours)
-		if result != test.expected {
-			t.Errorf("For %d hours, expected charge $%d, got $%d",
-				test.hours, test.expected, result)
-		}
+		t.Run(test.name, func(t *testing.T) {
+			result := calculateCharge(test.hours)
+			if result != test.expected {
+				t.Errorf("For %d hours, expected charge $%d, got $%d",
+					test.hours, test.expected, result)
+			}
+		})
 	}
 }
 
-func TestStatus(t *testing.T) {
-	pl := NewParkingLot(2)
-	pl.Park("KA-01-HH-1234")
-	pl.Park("KA-01-HH-9999")
+func TestParkingLotOperations(t *testing.T) {
+	t.Run("Complete parking operation flow", func(t *testing.T) {
+		pl := NewParkingLot(3)
 
-	// Since Status() prints to stdout, we're just testing that the slots are
-	// properly populated
-	if len(pl.slots) != 2 {
-		t.Errorf("Expected 2 occupied slots, got %d", len(pl.slots))
-	}
+		// Test parking
+		result1 := pl.Park("B-1234-XYZ")
+		if !strings.Contains(result1, "Successfully allocated slot number: 1") {
+			t.Errorf("Expected successful parking, got: %s", result1)
+		}
 
-	if pl.slots[1] != "KA-01-HH-1234" {
-		t.Errorf("Expected slot 1 to contain KA-01-HH-1234, got %s", pl.slots[1])
-	}
+		// Test status (indirectly through slots map)
+		if len(pl.slots) != 1 {
+			t.Errorf("Expected 1 occupied slot, got %d", len(pl.slots))
+		}
+
+		// Test leaving
+		result2 := pl.Leave("B-1234-XYZ", 3)
+		if !strings.Contains(result2, "left from slot 1") {
+			t.Errorf("Expected successful leave, got: %s", result2)
+		}
+
+		// Test slot is freed
+		if len(pl.slots) != 0 {
+			t.Errorf("Expected 0 occupied slots after leave, got %d", len(pl.slots))
+		}
+	})
+}
+
+func TestEdgeCases(t *testing.T) {
+	t.Run("Zero capacity parking lot", func(t *testing.T) {
+		pl := NewParkingLot(0)
+		result := pl.Park("KA-01-HH-1234")
+		expected := "🚫 Sorry, parking lot is full"
+		if result != expected {
+			t.Errorf("Expected '%s', got '%s'", expected, result)
+		}
+	})
+
+	t.Run("Multiple operations on same slot", func(t *testing.T) {
+		pl := NewParkingLot(1)
+		pl.Park("KA-01-HH-1234")
+		pl.Leave("KA-01-HH-1234", 1)
+		result := pl.Park("KA-01-HH-5678")
+		expected := "✅ Successfully allocated slot number: 1 for car: KA-01-HH-5678"
+		if result != expected {
+			t.Errorf("Expected '%s', got '%s'", expected, result)
+		}
+	})
 }
