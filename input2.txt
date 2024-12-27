@@ -1,0 +1,16 @@
+create_parking_lot 4
+park B-1234-XYZ
+park B-5678-UV
+status
+park B-9012-WW
+leave B-5678-UV 3
+status
+park D-1111-ABC
+park D-2222-DEF
+status
+leave B-1234-XYZ 1
+park D-3333-GHI
+leave D-1111-ABC 5
+status
+park D-4444-JKL
+status
