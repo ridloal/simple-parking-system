@@ -1,4 +1,4 @@
-# Parking Lot System
+# Simple Parking System
 
 A command-line parking lot management system implemented in Go. The system allows for automated ticketing, parking allocation, and fee calculation.
 
@@ -48,7 +48,7 @@ go mod init simple-parking-system
 go build main.go
 ```
 
-4. Run the application with input file:
+4. Run the application with or without input file:
 ```bash
 main input.txt
 # or use the second example
