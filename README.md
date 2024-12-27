@@ -11,6 +11,10 @@ A command-line parking lot management system implemented in Go. The system allow
 - Automated slot allocation (nearest to entry)
 - Time-based parking fee calculation
 
+### Updated Feature from Branch real-time-parking-cli
+
+- Support interactive CLI and can operate without input.txt
+
 ## Prerequisites
 
 - Go 1.16 or higher
@@ -46,9 +50,12 @@ go build main.go
 
 4. Run the application with input file:
 ```bash
-./main input.txt
+main input.txt
 # or use the second example
-./main input2.txt
+main input2.txt
+
+# or use interactive CLI (run without argument input)
+main
 ```
 
 ## Running Tests
@@ -89,3 +96,5 @@ Two example files are provided:
 - `input2.txt` - More complex scenarios including full lot management
 
 Check these files for example commands and expected output.
+
+Run without argument `input.txt` to run interactive CLI.
