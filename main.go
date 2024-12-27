@@ -6,7 +6,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // ParkingLot represents the parking system
@@ -102,64 +101,133 @@ func calculateCharge(hours int) int {
 	return 10 + ((hours - 2) * 10)
 }
 
-func main() {
-	if len(os.Args) != 2 {
-		fmt.Println("❌ Please provide input file path")
-		fmt.Println("Usage: ./parking_lot <input_file>")
+func displayMenu() {
+	printWithBorder("Available Commands")
+	fmt.Println("1. park <registration_number>")
+	fmt.Println("2. leave <registration_number> <hours>")
+	fmt.Println("3. status")
+	fmt.Println("4. exit")
+	fmt.Println("\nEnter your choice (1-4):")
+}
+
+func runInteractiveCLI() {
+	printWithBorder("Welcome to Parking Lot System")
+	fmt.Print("Enter parking lot capacity: ")
+
+	reader := bufio.NewReader(os.Stdin)
+	capacityStr, _ := reader.ReadString('\n')
+	capacityStr = strings.TrimSpace(capacityStr)
+
+	capacity, err := strconv.Atoi(capacityStr)
+	if err != nil || capacity <= 0 {
+		fmt.Println("❌ Invalid capacity. Please enter a positive number.")
 		return
 	}
 
-	file, err := os.Open(os.Args[1])
-	if err != nil {
-		fmt.Printf("❌ Error opening file: %v\n", err)
-		return
-	}
-	defer file.Close()
+	parkingLot := NewParkingLot(capacity)
+	fmt.Printf("🎉 Created a parking lot with %d slots\n", capacity)
 
-	printWithBorder("Parking Lot Management System")
-	fmt.Printf("Started at: %s\n", time.Now().Format("2006-01-02 15:04:05"))
+	for {
+		fmt.Println("\n" + strings.Repeat("-", 40))
+		displayMenu()
 
-	var parkingLot *ParkingLot
-	scanner := bufio.NewScanner(file)
+		choice, _ := reader.ReadString('\n')
+		choice = strings.TrimSpace(choice)
 
-	for scanner.Scan() {
-		command := strings.Fields(scanner.Text())
-		if len(command) == 0 {
-			continue
-		}
+		switch choice {
+		case "1":
+			fmt.Print("Enter car registration number: ")
+			reg, _ := reader.ReadString('\n')
+			reg = strings.TrimSpace(reg)
+			result := parkingLot.Park(reg)
+			fmt.Println(result)
 
-		printCommandExecution(scanner.Text())
+		case "2":
+			fmt.Print("Enter car registration number: ")
+			reg, _ := reader.ReadString('\n')
+			reg = strings.TrimSpace(reg)
 
-		switch command[0] {
-		case "create_parking_lot":
-			capacity, _ := strconv.Atoi(command[1])
-			parkingLot = NewParkingLot(capacity)
-			fmt.Printf("🎉 Created a parking lot with %d slots\n", capacity)
+			fmt.Print("Enter parking duration (hours): ")
+			hoursStr, _ := reader.ReadString('\n')
+			hoursStr = strings.TrimSpace(hoursStr)
 
-		case "park":
-			if parkingLot == nil {
-				fmt.Println("❌ Parking lot not initialized")
+			hours, err := strconv.Atoi(hoursStr)
+			if err != nil || hours < 0 {
+				fmt.Println("❌ Invalid hours. Please enter a non-negative number.")
 				continue
 			}
-			fmt.Println(parkingLot.Park(command[1]))
 
-		case "leave":
-			if parkingLot == nil {
-				fmt.Println("❌ Parking lot not initialized")
-				continue
-			}
-			hours, _ := strconv.Atoi(command[2])
-			fmt.Println(parkingLot.Leave(command[1], hours))
+			result := parkingLot.Leave(reg, hours)
+			fmt.Println(result)
 
-		case "status":
-			if parkingLot == nil {
-				fmt.Println("❌ Parking lot not initialized")
-				continue
-			}
+		case "3":
 			parkingLot.Status()
+
+		case "4":
+			printWithBorder("Thank you for using Parking Lot System")
+			return
+
+		default:
+			fmt.Println("❌ Invalid choice. Please try again.")
 		}
 	}
+}
 
-	printWithBorder("End of Operations")
-	fmt.Printf("Finished at: %s\n", time.Now().Format("2006-01-02 15:04:05"))
+func main() {
+	if len(os.Args) == 1 {
+		// No input file provided, run interactive CLI
+		runInteractiveCLI()
+	} else if len(os.Args) == 2 {
+		// Input file provided, run in file mode
+		file, err := os.Open(os.Args[1])
+		if err != nil {
+			fmt.Printf("❌ Error opening file: %v\n", err)
+			return
+		}
+		defer file.Close()
+
+		var parkingLot *ParkingLot
+		scanner := bufio.NewScanner(file)
+
+		for scanner.Scan() {
+			command := strings.Fields(scanner.Text())
+			if len(command) == 0 {
+				continue
+			}
+
+			printCommandExecution(scanner.Text())
+
+			switch command[0] {
+			case "create_parking_lot":
+				capacity, _ := strconv.Atoi(command[1])
+				parkingLot = NewParkingLot(capacity)
+				fmt.Printf("🎉 Created a parking lot with %d slots\n", capacity)
+
+			case "park":
+				if parkingLot == nil {
+					fmt.Println("❌ Parking lot not initialized")
+					continue
+				}
+				fmt.Println(parkingLot.Park(command[1]))
+
+			case "leave":
+				if parkingLot == nil {
+					fmt.Println("❌ Parking lot not initialized")
+					continue
+				}
+				hours, _ := strconv.Atoi(command[2])
+				fmt.Println(parkingLot.Leave(command[1], hours))
+
+			case "status":
+				if parkingLot == nil {
+					fmt.Println("❌ Parking lot not initialized")
+					continue
+				}
+				parkingLot.Status()
+			}
+		}
+	} else {
+		fmt.Println("❌ Invalid number of arguments")
+		fmt.Println("Usage: ./parking_lot [input_file]")
+	}
 }
