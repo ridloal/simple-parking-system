@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // ParkingLot represents the parking system
@@ -22,6 +23,19 @@ func NewParkingLot(capacity int) *ParkingLot {
 	}
 }
 
+// printWithBorder prints a message with a decorative border
+func printWithBorder(message string) {
+	width := len(message) + 4
+	border := strings.Repeat("=", width)
+	fmt.Printf("\n%s\n %s \n%s\n", border, message, border)
+}
+
+// printCommandExecution prints command being executed
+func printCommandExecution(command string) {
+	fmt.Printf("\n▶ Executing: %s\n", command)
+	fmt.Println(strings.Repeat("-", 40))
+}
+
 // findNextAvailableSlot finds the nearest empty slot
 func (pl *ParkingLot) findNextAvailableSlot() (int, bool) {
 	for i := 1; i <= pl.capacity; i++ {
@@ -36,11 +50,11 @@ func (pl *ParkingLot) findNextAvailableSlot() (int, bool) {
 func (pl *ParkingLot) Park(regNumber string) string {
 	slot, found := pl.findNextAvailableSlot()
 	if !found {
-		return "Sorry, parking lot is full"
+		return "🚫 Sorry, parking lot is full"
 	}
 
 	pl.slots[slot] = regNumber
-	return fmt.Sprintf("Allocated slot number: %d", slot)
+	return fmt.Sprintf("✅ Successfully allocated slot number: %d for car: %s", slot, regNumber)
 }
 
 // Leave handles car leaving the parking lot
@@ -49,21 +63,35 @@ func (pl *ParkingLot) Leave(regNumber string, hours int) string {
 		if reg == regNumber {
 			delete(pl.slots, slot)
 			charge := calculateCharge(hours)
-			return fmt.Sprintf("Registration number %s with Slot Number %d is free with Charge $%d",
-				regNumber, slot, charge)
+			return fmt.Sprintf("🚗 Car with registration number %s left from slot %d\n💰 Parking charge: $%d for %d hours",
+				regNumber, slot, charge, hours)
 		}
 	}
-	return fmt.Sprintf("Registration number %s not found", regNumber)
+	return fmt.Sprintf("❌ Registration number %s not found in the parking lot", regNumber)
 }
 
 // Status prints current parking lot status
 func (pl *ParkingLot) Status() {
-	fmt.Println("Slot No. Registration No.")
+	printWithBorder("Current Parking Status")
+
+	if len(pl.slots) == 0 {
+		fmt.Println("🅿️  Parking lot is empty")
+		return
+	}
+
+	fmt.Printf("\n%-10s | %-15s | %-10s\n", "Slot No.", "Registration", "Status")
+	fmt.Println(strings.Repeat("-", 40))
+
 	for i := 1; i <= pl.capacity; i++ {
 		if reg, exists := pl.slots[i]; exists {
-			fmt.Printf("%d %s\n", i, reg)
+			fmt.Printf("%-10d | %-15s | %-10s\n", i, reg, "Occupied")
+		} else {
+			fmt.Printf("%-10d | %-15s | %-10s\n", i, "-", "Available")
 		}
 	}
+
+	fmt.Printf("\nTotal Capacity: %d | Occupied: %d | Available: %d\n",
+		pl.capacity, len(pl.slots), pl.capacity-len(pl.slots))
 }
 
 // calculateCharge calculates parking charge based on hours
@@ -76,16 +104,20 @@ func calculateCharge(hours int) int {
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Println("Please provide input file path")
+		fmt.Println("❌ Please provide input file path")
+		fmt.Println("Usage: ./parking_lot <input_file>")
 		return
 	}
 
 	file, err := os.Open(os.Args[1])
 	if err != nil {
-		fmt.Printf("Error opening file: %v\n", err)
+		fmt.Printf("❌ Error opening file: %v\n", err)
 		return
 	}
 	defer file.Close()
+
+	printWithBorder("Parking Lot Management System")
+	fmt.Printf("Started at: %s\n", time.Now().Format("2006-01-02 15:04:05"))
 
 	var parkingLot *ParkingLot
 	scanner := bufio.NewScanner(file)
@@ -96,22 +128,24 @@ func main() {
 			continue
 		}
 
+		printCommandExecution(scanner.Text())
+
 		switch command[0] {
 		case "create_parking_lot":
 			capacity, _ := strconv.Atoi(command[1])
 			parkingLot = NewParkingLot(capacity)
-			fmt.Printf("Created a parking lot with %d slots\n", capacity)
+			fmt.Printf("🎉 Created a parking lot with %d slots\n", capacity)
 
 		case "park":
 			if parkingLot == nil {
-				fmt.Println("Parking lot not initialized")
+				fmt.Println("❌ Parking lot not initialized")
 				continue
 			}
 			fmt.Println(parkingLot.Park(command[1]))
 
 		case "leave":
 			if parkingLot == nil {
-				fmt.Println("Parking lot not initialized")
+				fmt.Println("❌ Parking lot not initialized")
 				continue
 			}
 			hours, _ := strconv.Atoi(command[2])
@@ -119,10 +153,13 @@ func main() {
 
 		case "status":
 			if parkingLot == nil {
-				fmt.Println("Parking lot not initialized")
+				fmt.Println("❌ Parking lot not initialized")
 				continue
 			}
 			parkingLot.Status()
 		}
 	}
+
+	printWithBorder("End of Operations")
+	fmt.Printf("Finished at: %s\n", time.Now().Format("2006-01-02 15:04:05"))
 }
