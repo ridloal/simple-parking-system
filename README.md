@@ -22,6 +22,7 @@ parking-lot/
 ├── main.go
 ├── main_test.go
 ├── input.txt
+├── input2.txt
 └── README.md
 ```
 
@@ -33,14 +34,21 @@ git clone https://github.com/ridloal/simple-parking-system
 cd simple-parking-system
 ```
 
-2. Build the application:
+2. Initialize Go module:
+```bash
+go mod init simple-parking-system
+```
+
+3. Build the application:
 ```bash
 go build main.go
 ```
 
-3. Run the application with input file:
+4. Run the application with input file:
 ```bash
 ./main input.txt
+# or use the second example
+./main input2.txt
 ```
 
 ## Running Tests
@@ -76,4 +84,8 @@ The system accepts the following commands through the input file:
 
 ## Example Usage
 
-See `input.txt` for example commands and expected output.
+Two example files are provided:
+- `input.txt` - Basic parking operations
+- `input2.txt` - More complex scenarios including full lot management
+
+Check these files for example commands and expected output.
